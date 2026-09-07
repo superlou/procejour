@@ -1,0 +1,115 @@
+from typing import Annotated
+
+import bcrypt
+from fastapi import Depends, Request
+from fastapi.responses import RedirectResponse
+from nicegui import app, ui
+from starlette.middleware.base import BaseHTTPMiddleware
+
+from .models import User
+
+unauthenticated_page_routes = {
+    "/login",
+    "/users/new",
+    "/openapi.json",
+}
+
+
+@app.add_middleware
+class AuthMiddleWare(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+        if (
+            app.storage.user.get("authenticated")
+            or path in unauthenticated_page_routes
+            or path.startswith("/api")
+            or path.startswith("/_nicegui")
+        ):
+            return await call_next(request)
+
+        return RedirectResponse(f"/login?redirect_to={path}")
+
+
+async def get_user() -> User:
+    user = await User.filter(email=app.storage.user.get("email")).first()
+    if user is None:
+        app.storage.user.pop("email", None)
+        app.storage.user.pop("authenticated", None)
+        raise Exception("User not found")
+
+    return user
+
+
+CurrentUser = Annotated[User, Depends(get_user)]
+
+
+@ui.page("/logout")
+async def logout() -> None:
+    app.storage.user.clear()
+    ui.navigate.to("/login")
+
+
+@ui.page("/login")
+async def login(redirect_to: str = "/") -> RedirectResponse | None:
+    ui.page_title("Log in")
+
+    if app.storage.user.get("authenticated"):
+        return RedirectResponse(redirect_to)
+
+    async def try_login() -> None:
+        user = await User.filter(email=email.value).first()
+
+        if user and bcrypt.checkpw(
+            password.value.encode("utf-8"), user.password_hash.encode("utf-8")
+        ):
+            app.storage.user.update(
+                authenticated=True,
+                email=user.email,
+                admin=user.admin,
+            )
+            ui.navigate.to(redirect_to)
+        else:
+            ui.notify("Wrong username or password", color="negative")
+
+    with ui.card().classes("absolute-center items-stretch"):
+        email = (
+            ui.input("Email")
+            .props("autofocus")
+            .on("keydown.enter", lambda: password.run_method("focus"))
+        )
+        password = ui.input("Password", password=True, password_toggle_button=True).on(
+            "keydown.enter", try_login
+        )
+        ui.button("Log in", on_click=try_login)
+        ui.link("Create account", "/users/new")
+
+    return None
+
+
+async def num_users() -> int:
+    return await User.all().count()
+
+
+def create_salted_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+@ui.page("/users/new")
+def new_user():
+    ui.page_title("Create account")
+
+    async def create_user() -> None:
+        password_hash = create_salted_hash(password.value)
+        await User.create(
+            email=email.value,
+            password_hash=password_hash,
+            admin=await num_users() == 0,
+        )
+        ui.navigate.to("/login?redirect_to=/user")
+
+    with ui.card().classes("absolute-center items-stretch"):
+        ui.label("Create account")
+        email = ui.input("Email").props("autofocus")
+        password = ui.input("Password", password=True, password_toggle_button=True)
+
+        ui.button("Create", on_click=create_user)

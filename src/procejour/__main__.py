@@ -1,7 +1,7 @@
 from nicegui import app, ui
 from tortoise.contrib.fastapi import register_tortoise
 
-from . import datasheets, procedures  # noqa: F401
+from . import auth, datasheets, procedures, users  # noqa: F401
 from .orm import TORTOISE_ORM
 
 db_url: str = TORTOISE_ORM["connections"]["default"]
@@ -15,6 +15,7 @@ register_tortoise(
 def home():
     ui.label("Procejour!")
     ui.link("Procedures", "/procedures")
+    ui.link("User settings", "/user")
 
 
 secret = "osLj63o3qH4Kncmv6x6vRmyiqD8g/nPEMQQEl7JFZh4="
