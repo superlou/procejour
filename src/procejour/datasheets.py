@@ -53,10 +53,12 @@ async def build_procedure_step(datasheet: Datasheet, step: dict):
                 step_mark.pass_fail = StepMarkPassFail.UNSET
         await step_mark.save()
 
-    with ui.item():
-        with ui.item_section().classes("col-6"):
+    with ui.item().classes("grid grid-cols-12 w-full"):
+        with ui.item_section().classes("col-span-1"):
+            ui.label(step["num"])
+        with ui.item_section().classes("col-span-6"):
             ui.label(step["action"])
-        with ui.item_section().classes("col-5"):
+        with ui.item_section().classes("col-span-2"):
             observation_input = (
                 ui.input(value=observation).props("outlined").classes("items-center")
             )
@@ -66,7 +68,13 @@ async def build_procedure_step(datasheet: Datasheet, step: dict):
                     ui.label(units)
 
             observation_input.on("keydown.enter", save_step)
-        with ui.item_section().classes("col-1"):
+        with ui.item_section().classes("col-span-2"):
+            if "specification" in step:
+                spec = step["specification"]
+            else:
+                spec = ""
+            ui.label(spec).classes("text-center")
+        with ui.item_section().classes("col-span-1"):
             if pass_fail:
                 value = "unset"
                 match pass_fail_mark:
@@ -76,5 +84,7 @@ async def build_procedure_step(datasheet: Datasheet, step: dict):
                         value = "fail"
                 pass_fail_button = PassFailButton(value, on_change=save_step)
             else:
-                value = step_mark.pass_fail == StepMarkPassFail.DONE
+                value = (
+                    step_mark.pass_fail == StepMarkPassFail.DONE if step_mark else None
+                )
                 complete_button = DoneButton(value, on_change=save_step)
