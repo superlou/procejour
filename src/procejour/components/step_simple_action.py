@@ -1,0 +1,48 @@
+from nicegui import ui
+
+from procejour.components.done_button import DoneButton
+from procejour.models import StepMark, StepMarkPassFail
+
+
+async def simple_action_step(step, datasheet):
+    step_mark = (
+        await StepMark.filter(step_id=step["id"], datasheet=datasheet)
+        .order_by("-timestamp")
+        .first()
+    )
+    observation = step_mark.observation["value"] if step_mark else ""
+
+    units = None
+    if "observation" in step and step["observation"].startswith("decimal"):
+        tokens = step["observation"].split(" ")
+        if len(tokens) > 1:
+            units = tokens[1]
+
+    async def save_step():
+        step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
+        step_mark.observation = {"value": observation_input.value}
+        if complete_button.value:
+            step_mark.pass_fail = StepMarkPassFail.DONE
+        else:
+            step_mark.pass_fail = StepMarkPassFail.UNSET
+        await step_mark.save()
+
+    with ui.item().classes("grid grid-cols-12 w-full"):
+        with ui.item_section().classes("col-span-1"):
+            ui.label(step["num"])
+        with ui.item_section().classes("col-span-6"):
+            ui.label(step["action"])
+        with ui.item_section().classes("col-span-2"):
+            observation_input = (
+                ui.input(value=observation).props("outlined").classes("items-center")
+            )
+            if units:
+                with observation_input.add_slot("append"):
+                    ui.label(units)
+
+            observation_input.on("keydown.enter", save_step)
+        with ui.item_section().classes("col-span-2"):
+            ui.label("").classes("text-center")
+        with ui.item_section().classes("col-span-1"):
+            value = step_mark.pass_fail == StepMarkPassFail.DONE if step_mark else None
+            complete_button = DoneButton(value, on_change=save_step)
