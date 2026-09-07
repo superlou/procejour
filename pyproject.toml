@@ -1,0 +1,14 @@
+[project]
+name = "procejour"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "nicegui>=3.16.0",
+    "tortoise-orm>=1.1.8",
+]
+
+
+[tool.tortoise]
+tortoise_orm = "procejour.orm.TORTOISE_ORM"
