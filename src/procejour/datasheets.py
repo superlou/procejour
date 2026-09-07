@@ -1,6 +1,7 @@
 from nicegui import ui
 
-from procejour.models import Datasheet, StepMark
+from procejour.components.pass_fail_button import PassFailButton
+from procejour.models import Datasheet, StepMark, StepMarkPassFail
 
 
 @ui.page("/datasheets/{datasheet_id}")
@@ -12,18 +13,10 @@ async def run_datasheet(datasheet_id: int):
 
     with ui.list().classes("w-full"):
         for step in procedure.steps:
-            await build_procedure_step(
-                datasheet, step, pass_fail="specification" in step
-            )
+            await build_procedure_step(datasheet, step)
 
 
-async def pass_fail_button():
-    with ui.button_group().props("outline"):
-        ui.button("P").props("outline")
-        ui.button("F").props("outline")
-
-
-async def build_procedure_step(datasheet: Datasheet, step: dict, pass_fail=True):
+async def build_procedure_step(datasheet: Datasheet, step: dict):
     print(step)
 
     step_mark = (
@@ -32,6 +25,8 @@ async def build_procedure_step(datasheet: Datasheet, step: dict, pass_fail=True)
         .first()
     )
     observation = step_mark.observation["value"] if step_mark else ""
+    pass_fail = "specification" in step
+    pass_fail_mark = step_mark.pass_fail if step_mark else None
 
     units = None
     if step["observation"].startswith("decimal"):
@@ -42,6 +37,14 @@ async def build_procedure_step(datasheet: Datasheet, step: dict, pass_fail=True)
     async def save_step():
         step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
         step_mark.observation = {"value": observation_input.value}
+        if pass_fail:
+            match pass_fail_button.value:
+                case "unset":
+                    step_mark.pass_fail = StepMarkPassFail.UNSET
+                case "pass":
+                    step_mark.pass_fail = StepMarkPassFail.PASS
+                case "fail":
+                    step_mark.pass_fail = StepMarkPassFail.FAIL
         await step_mark.save()
 
     with ui.item():
@@ -57,7 +60,12 @@ async def build_procedure_step(datasheet: Datasheet, step: dict, pass_fail=True)
                     ui.label(units)
 
             observation_input.on("keydown.enter", save_step)
-            observation_input.on("blur", save_step)  # todo only if changed
         with ui.item_section().classes("col-1"):
             if pass_fail:
-                await pass_fail_button()
+                value = "unset"
+                match pass_fail_mark:
+                    case StepMarkPassFail.PASS:
+                        value = "pass"
+                    case StepMarkPassFail.FAIL:
+                        value = "fail"
+                pass_fail_button = PassFailButton(value, on_change=save_step)
