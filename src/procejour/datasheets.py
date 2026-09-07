@@ -30,10 +30,24 @@ async def build_procedure_step(datasheet: Datasheet, step: dict):
     pass_fail_mark = step_mark.pass_fail if step_mark else None
 
     units = None
-    if step["observation"].startswith("decimal"):
+    if "observation" in step and step["observation"].startswith("decimal"):
         tokens = step["observation"].split(" ")
         if len(tokens) > 1:
             units = tokens[1]
+
+    if step.get("heading", False):
+        with (
+            ui.item()
+            .classes("grid grid-cols-12 w-full")
+            .style("border-bottom: 1px solid #d0d0d8; background: #f4f4f8")
+        ):
+            with ui.item_section().classes("col-span-1"):
+                ui.label(step["num"])
+            with ui.item_section().classes("col-span-6"):
+                ui.label(step["heading"])
+            with ui.item_section().classes("col-span-5"):
+                pass
+        return
 
     async def save_step():
         step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
