@@ -1,5 +1,6 @@
 from nicegui import ui
 
+from procejour.components.done_button import DoneButton
 from procejour.components.pass_fail_button import PassFailButton
 from procejour.models import Datasheet, StepMark, StepMarkPassFail
 
@@ -45,6 +46,11 @@ async def build_procedure_step(datasheet: Datasheet, step: dict):
                     step_mark.pass_fail = StepMarkPassFail.PASS
                 case "fail":
                     step_mark.pass_fail = StepMarkPassFail.FAIL
+        else:
+            if complete_button.value:
+                step_mark.pass_fail = StepMarkPassFail.DONE
+            else:
+                step_mark.pass_fail = StepMarkPassFail.UNSET
         await step_mark.save()
 
     with ui.item():
@@ -69,3 +75,6 @@ async def build_procedure_step(datasheet: Datasheet, step: dict):
                     case StepMarkPassFail.FAIL:
                         value = "fail"
                 pass_fail_button = PassFailButton(value, on_change=save_step)
+            else:
+                value = step_mark.pass_fail == StepMarkPassFail.DONE
+                complete_button = DoneButton(value, on_change=save_step)
