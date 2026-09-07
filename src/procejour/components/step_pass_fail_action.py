@@ -1,15 +1,12 @@
 from nicegui import ui
 
-from procejour.components.pass_fail_button import PassFailButton
-from procejour.models import StepMark, StepMarkPassFail
+from ..models import StepMark, StepMarkPassFail
+from .pass_fail_button import PassFailButton
+from .step_simple_action import get_current_step_mark
 
 
 async def pass_fail_action_step(step, datasheet):
-    step_mark = (
-        await StepMark.filter(step_id=step["id"], datasheet=datasheet)
-        .order_by("-timestamp")
-        .first()
-    )
+    step_mark = await get_current_step_mark(step["id"], datasheet)
     observation = step_mark.observation["value"] if step_mark else ""
     pass_fail_mark = step_mark.pass_fail if step_mark else None
 

@@ -1,15 +1,19 @@
 from nicegui import ui
 
-from procejour.components.done_button import DoneButton
-from procejour.models import StepMark, StepMarkPassFail
+from ..models import Datasheet, StepMark, StepMarkPassFail
+from .done_button import DoneButton
 
 
-async def simple_action_step(step, datasheet):
-    step_mark = (
-        await StepMark.filter(step_id=step["id"], datasheet=datasheet)
+async def get_current_step_mark(id: str, datasheet: Datasheet):
+    return (
+        await StepMark.filter(step_id=id, datasheet=datasheet)
         .order_by("-timestamp")
         .first()
     )
+
+
+async def simple_action_step(step, datasheet):
+    step_mark = await get_current_step_mark(step["id"], datasheet)
     observation = step_mark.observation["value"] if step_mark else ""
 
     units = None
