@@ -25,7 +25,6 @@ async def simple_action_step(step, datasheet):
             units = tokens[1]
 
     async def save_step():
-        print("saving")
         step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
         step_mark.observation = {"value": observation_input.value}
         if complete_button.value:

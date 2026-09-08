@@ -16,6 +16,7 @@ class DatasheetInput:
         self.value = value
         self.units = units
         self.on_commit = on_commit
+        self.on_change = on_change
 
         self.render()
 
@@ -39,15 +40,15 @@ class DatasheetInput:
 
     async def call_on_commit(self):
         self.value = self.control.value
-        self.update_value()
+        await self.update_value()
 
         if is_coroutine_function(self.on_commit):
             await self.on_commit()
-        else:
+        elif self.on_commit:
             self.on_commit()
 
     async def call_on_change(self):
-        if is_coroutine_function(self.on_commit):
-            await self.on_commit()
-        else:
-            self.on_commit()
+        if is_coroutine_function(self.on_change):
+            await self.on_change()
+        elif self.on_change:
+            self.on_change()
