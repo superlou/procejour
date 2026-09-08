@@ -1,6 +1,6 @@
 from nicegui import ui
 
-from procejour.components.datasheet_input import DatasheetInput
+from procejour.components.datasheet_input import Autofill, DatasheetInput
 
 from ..models import Datasheet, StepMark, StepMarkPassFail
 from .done_button import DoneButton
@@ -12,6 +12,15 @@ async def get_current_step_mark(id: str, datasheet: Datasheet):
         .order_by("-timestamp")
         .first()
     )
+
+
+def determine_autofill(step) -> Autofill | None:
+    if step["observation"] == "name":
+        return Autofill.USER
+    elif step["observation"] == "date":
+        return Autofill.DATE
+
+    return None
 
 
 async def simple_action_step(step, datasheet):
@@ -39,7 +48,12 @@ async def simple_action_step(step, datasheet):
         with ui.item_section().classes("col-span-6"):
             ui.label(step["action"])
         with ui.item_section().classes("col-span-2"):
-            observation_input = DatasheetInput(observation, units, on_commit=save_step)
+            observation_input = DatasheetInput(
+                observation,
+                units,
+                on_commit=save_step,
+                autofill=determine_autofill(step),
+            )
         with ui.item_section().classes("col-span-2"):
             ui.label("").classes("text-center")
         with ui.item_section().classes("col-span-1"):

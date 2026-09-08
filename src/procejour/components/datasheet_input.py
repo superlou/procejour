@@ -1,8 +1,17 @@
+from datetime import datetime
+from enum import Enum
 from typing import Callable, Coroutine
 
 from nicegui import ui
 from nicegui.events import ValueChangeEventArguments
 from nicegui.helpers import is_coroutine_function
+
+from procejour.auth import get_user
+
+
+class Autofill(Enum):
+    USER = "user"
+    DATE = "date"
 
 
 class DatasheetInput:
@@ -12,11 +21,13 @@ class DatasheetInput:
         units: str | None = None,
         on_commit: Callable | Coroutine | None = None,
         on_change: Callable | Coroutine | None = None,
+        autofill: Autofill | None = None,
     ):
         self.value = value
         self.units = units
         self.on_commit = on_commit
         self.on_change = on_change
+        self.autofill = autofill
 
         self.render()
 
@@ -24,11 +35,25 @@ class DatasheetInput:
         self.control = ui.input(value=self.value, on_change=self.update_value).props(
             "outlined"
         )
+
         if self.units:
             with self.control.add_slot("append"):
                 ui.label(self.units)
 
+        if self.autofill:
+            with self.control.add_slot("prepend"):
+                ui.button(icon="auto_fix_high", on_click=self.run_autofill).props(
+                    "flat dense"
+                )
+
         self.control.on("keydown.enter", self.call_on_commit)
+
+    async def run_autofill(self):
+        match self.autofill:
+            case Autofill.USER:
+                self.control.value = (await get_user()).name
+            case Autofill.DATE:
+                self.control.value = datetime.now().strftime("%m/%d/%Y")
 
     async def update_value(self, evt: ValueChangeEventArguments | None = None):
         if self.value != self.control.value:
