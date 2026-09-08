@@ -15,6 +15,9 @@ async def get_current_step_mark(id: str, datasheet: Datasheet):
 
 
 def determine_autofill(step) -> Autofill | None:
+    if "observation" not in step:
+        return None
+
     if step["observation"] == "name":
         return Autofill.USER
     elif step["observation"] == "date":
@@ -25,7 +28,11 @@ def determine_autofill(step) -> Autofill | None:
 
 async def simple_action_step(step, datasheet):
     step_mark = await get_current_step_mark(step["id"], datasheet)
-    observation = step_mark.observation["value"] if step_mark else ""
+    observation = (
+        step_mark.observation["value"]
+        if step_mark and "value" in step_mark.observation
+        else ""
+    )
 
     units = None
     if "observation" in step and step["observation"].startswith("decimal"):
@@ -35,7 +42,12 @@ async def simple_action_step(step, datasheet):
 
     async def save_step():
         step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
-        step_mark.observation = {"value": observation_input.value}
+
+        if "observation" in step:
+            step_mark.observation = {"value": observation_input.value}
+        else:
+            step_mark.observation = {}
+
         if complete_button.value:
             step_mark.pass_fail = StepMarkPassFail.DONE
         else:
@@ -48,12 +60,13 @@ async def simple_action_step(step, datasheet):
         with ui.item_section().classes("col-span-6"):
             ui.label(step["action"])
         with ui.item_section().classes("col-span-2"):
-            observation_input = DatasheetInput(
-                observation,
-                units,
-                on_commit=save_step,
-                autofill=determine_autofill(step),
-            )
+            if "observation" in step:
+                observation_input = DatasheetInput(
+                    observation,
+                    units,
+                    on_commit=save_step,
+                    autofill=determine_autofill(step),
+                )
         with ui.item_section().classes("col-span-2"):
             ui.label("").classes("text-center")
         with ui.item_section().classes("col-span-1"):
