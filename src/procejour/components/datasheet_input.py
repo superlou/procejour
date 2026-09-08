@@ -29,11 +29,13 @@ class DatasheetInput:
 
         self.control.on("keydown.enter", self.call_on_commit)
 
-    def update_value(self, evt: ValueChangeEventArguments | None = None):
+    async def update_value(self, evt: ValueChangeEventArguments | None = None):
         if self.value != self.control.value:
             self.control.props("filled")
         else:
             self.control.props(remove="filled")
+
+        await self.call_on_change()
 
     async def call_on_commit(self):
         self.value = self.control.value
