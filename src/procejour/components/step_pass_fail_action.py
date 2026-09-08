@@ -1,5 +1,7 @@
 from nicegui import ui
 
+from procejour.components.datasheet_input import DatasheetInput
+
 from ..models import StepMark, StepMarkPassFail
 from .pass_fail_button import PassFailButton
 from .step_simple_action import get_current_step_mark
@@ -35,15 +37,7 @@ async def pass_fail_action_step(step, datasheet):
         with ui.item_section().classes("col-span-6"):
             ui.label(step["action"])
         with ui.item_section().classes("col-span-2"):
-            observation_input = (
-                ui.input(value=observation).props("outlined").classes("items-center")
-            )
-
-            if units:
-                with observation_input.add_slot("append"):
-                    ui.label(units)
-
-            observation_input.on("keydown.enter", save_step)
+            observation_input = DatasheetInput(observation, units, on_commit=save_step)
         with ui.item_section().classes("col-span-2"):
             ui.label(step["specification"]).classes("text-center")
         with ui.item_section().classes("col-span-1"):

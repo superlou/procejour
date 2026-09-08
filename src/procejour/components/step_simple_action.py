@@ -1,5 +1,7 @@
 from nicegui import ui
 
+from procejour.components.datasheet_input import DatasheetInput
+
 from ..models import Datasheet, StepMark, StepMarkPassFail
 from .done_button import DoneButton
 
@@ -23,6 +25,7 @@ async def simple_action_step(step, datasheet):
             units = tokens[1]
 
     async def save_step():
+        print("saving")
         step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
         step_mark.observation = {"value": observation_input.value}
         if complete_button.value:
@@ -37,14 +40,7 @@ async def simple_action_step(step, datasheet):
         with ui.item_section().classes("col-span-6"):
             ui.label(step["action"])
         with ui.item_section().classes("col-span-2"):
-            observation_input = (
-                ui.input(value=observation).props("outlined").classes("items-center")
-            )
-            if units:
-                with observation_input.add_slot("append"):
-                    ui.label(units)
-
-            observation_input.on("keydown.enter", save_step)
+            observation_input = DatasheetInput(observation, units, on_commit=save_step)
         with ui.item_section().classes("col-span-2"):
             ui.label("").classes("text-center")
         with ui.item_section().classes("col-span-1"):
