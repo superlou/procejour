@@ -1,3 +1,4 @@
+import re
 from enum import Enum, EnumCheck
 
 from tortoise import fields, models
@@ -44,6 +45,7 @@ class ProcedureRev(models.Model):
     ref_doc = TextField(db_default="")
     ref_rev = TextField(db_default="")
     steps = JSONField(db_default=[])
+    datasheet_title = TextField(db_default="")
 
     datasheets: ManyToManyRelation["Datasheet"]
 
@@ -54,6 +56,33 @@ class Datasheet(models.Model):
     procedure_rev: ForeignKeyRelation[ProcedureRev] = ForeignKeyField(
         "models.ProcedureRev", related_name="datasheets"
     )
+
+    @property
+    async def title(self) -> str:
+        pattern = r"\{\{\s*([a-zA-Z0-9_]+)\s*\}\}"
+        title = (await self.procedure_rev).datasheet_title
+        data = {
+            step_id: await self.step_mark_observation(step_id)
+            for step_id in list(set(re.findall(pattern, title)))
+        }
+
+        def replacer(match):
+            key = match.group(1)
+            return data.get(key, "")
+
+        title = re.sub(pattern, replacer, title)
+        return title
+
+    async def step_mark_observation(self, step_id: str):
+        step_mark = (
+            await StepMark.filter(step_id=step_id, datasheet=self)
+            .order_by("-timestamp")
+            .first()
+        )
+        if step_mark:
+            return step_mark.observation["value"]
+        else:
+            return ""
 
 
 class StepMarkPassFail(Enum):

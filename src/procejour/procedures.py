@@ -64,7 +64,10 @@ async def show_procedure(id: int):
 
             for datasheet in await rev.datasheets.order_by("-created_at"):
                 with ui.item():
-                    ui.link(str(datasheet.id), f"/datasheets/{datasheet.id}")
+                    ui.link(
+                        f"{datasheet.id} {await datasheet.title}",
+                        f"/datasheets/{datasheet.id}",
+                    )
 
 
 @ui.page("/procedures/{id}/edit")
@@ -82,6 +85,7 @@ async def edit_procedure(id: int):
         rev.title = title_input.value
         rev.ref_doc = ref_doc_input.value
         rev.ref_rev = ref_rev_input.value
+        rev.datasheet_title = datasheet_title_input.value
 
         response = await steps_input.run_editor_method("get")
         if "json" in response:
@@ -98,6 +102,9 @@ async def edit_procedure(id: int):
     with ui.row():
         ref_doc_input = ui.input("Reference Document", value=current_rev.ref_doc)
         ref_rev_input = ui.input("Reference Revision", value=current_rev.ref_rev)
+    datasheet_title_input = ui.input(
+        "Datasheet Title", value=current_rev.datasheet_title
+    )
 
     steps_input = ui.json_editor(
         {"content": {"json": current_rev.steps}, "mode": "text"}
