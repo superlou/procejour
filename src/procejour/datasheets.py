@@ -8,13 +8,13 @@ from procejour.models import Datasheet
 
 @ui.page("/datasheets/{datasheet_id}")
 async def run_datasheet(datasheet_id: int):
-    datasheet = await Datasheet.get(id=datasheet_id).prefetch_related("procedure")
-    procedure = datasheet.procedure
+    datasheet = await Datasheet.get(id=datasheet_id).prefetch_related("procedure_rev")
+    procedure_rev = datasheet.procedure_rev
 
-    ui.label(procedure.title)
+    ui.label(procedure_rev.title)
 
     with ui.list().classes("w-full"):
-        for step in procedure.steps:
+        for step in procedure_rev.steps:
             await build_procedure_step(datasheet, step)
 
 

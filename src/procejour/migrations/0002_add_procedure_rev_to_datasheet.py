@@ -4,14 +4,14 @@ from tortoise.fields.base import OnDelete
 from tortoise import fields
 
 class Migration(migrations.Migration):
-    dependencies = [('models', '0003_add_datasheet')]
+    dependencies = [('models', '0001_combine_migrations')]
 
     initial = False
 
     operations = [
         ops.AddField(
             model_name='Datasheet',
-            name='procedure',
-            field=fields.ForeignKeyField('models.Procedure', source_field='procedure_id', db_constraint=True, to_field='id', related_name='datasheets', on_delete=OnDelete.CASCADE),
+            name='procedure_rev',
+            field=fields.ForeignKeyField('models.ProcedureRev', source_field='procedure_rev_id', db_constraint=True, to_field='id', related_name='datasheets', on_delete=OnDelete.CASCADE),
         ),
     ]

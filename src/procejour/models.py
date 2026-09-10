@@ -11,31 +11,48 @@ from tortoise.fields import (
     ForeignKeyRelation,
     IntField,
     JSONField,
+    ManyToManyRelation,
     TextField,
 )
 
 
 class Procedure(models.Model):
     id = IntField(primary_key=True)
+    # Tortoise cannot create a model which only has an auto ID field, so
+    # created_at is a dummy value.
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    revs: ManyToManyRelation["ProcedureRev"]
+
+    @property
+    async def current_rev(self) -> "ProcedureRev":
+        result = await self.revs.order_by("-saved_at").first()
+        if result is None:
+            raise Exception("Procedure is always expected to have a rev!")
+        return result
+
+
+class ProcedureRev(models.Model):
+    id = IntField(primary_key=True)
+    procedure: ForeignKeyRelation[Procedure] = ForeignKeyField(
+        "models.Procedure", related_name="revs"
+    )
+    created_at = DateTimeField(auto_now=True)
+    saved_at = DateTimeField(auto_now=True)
+
     title = TextField(db_default="")
     ref_doc = TextField(db_default="")
     ref_rev = TextField(db_default="")
     steps = JSONField(db_default=[])
 
-    root_procedure: ForeignKeyNullableRelation["Procedure"] = ForeignKeyField(
-        "models.Procedure", related_name="derived_procedures", null=True
-    )
-    parent_procedure: ForeignKeyNullableRelation["Procedure"] = ForeignKeyField(
-        "models.Procedure", related_name="child_procedure", null=True
-    )
-
-    # todo Add calculated field identifying if a datasheet exists
+    datasheets: ManyToManyRelation["Datasheet"]
 
 
 class Datasheet(models.Model):
     id = IntField(primary_key=True)
-    procedure: ForeignKeyRelation[Procedure] = ForeignKeyField(
-        "models.Procedure", related_name="datasheets"
+    created_at = DateTimeField(auto_now=True)
+    procedure_rev: ForeignKeyRelation[ProcedureRev] = ForeignKeyField(
+        "models.ProcedureRev", related_name="datasheets"
     )
 
 
