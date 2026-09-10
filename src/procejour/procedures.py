@@ -2,13 +2,15 @@ import json
 
 from nicegui import ui
 
+from procejour.auth import CurrentUser
+from procejour.components.header import header
 from procejour.models import Datasheet, Procedure, ProcedureRev
 
 from . import humanize
 
 
 @ui.page("/procedures")
-async def get_procedures():
+async def get_procedures(current_user: CurrentUser):
     async def create_new_procedure():
         procedure = await Procedure.create()
         await ProcedureRev.create(procedure=procedure, title="New Procedure")
@@ -22,6 +24,7 @@ async def get_procedures():
 
     procedures = await Procedure.all()
 
+    header(current_user)
     with ui.list():
         for procedure in procedures:
             current_rev = await procedure.current_rev
@@ -37,13 +40,15 @@ async def get_procedures():
 
 
 @ui.page("/procedures/{id}")
-async def show_procedure(id: int):
+async def show_procedure(id: int, current_user: CurrentUser):
     procedure = await Procedure.get(id=id)
     current_rev = await procedure.current_rev
 
     async def create_datasheet():
         datasheet = await Datasheet.create(procedure_rev=current_rev)
         ui.navigate.to(f"/datasheets/{datasheet.id}")
+
+    header(current_user)
 
     ui.link("Procedures", "/procedures")
     ui.label(current_rev.title)
@@ -71,7 +76,7 @@ async def show_procedure(id: int):
 
 
 @ui.page("/procedures/{id}/edit")
-async def edit_procedure(id: int):
+async def edit_procedure(id: int, current_user: CurrentUser):
     procedure = await Procedure.get(id=id)
     current_rev = await procedure.current_rev
 
@@ -97,6 +102,7 @@ async def edit_procedure(id: int):
         await rev.save()
         ui.notify("Saved")
 
+    header(current_user)
     ui.link("Procedures", "/procedures")
     title_input = ui.input("Title", value=current_rev.title)
     with ui.row():
