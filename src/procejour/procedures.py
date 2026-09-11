@@ -16,12 +16,6 @@ async def get_procedures(current_user: CurrentUser):
         await ProcedureRev.create(procedure=procedure, title="New Procedure")
         ui.navigate.to(f"/procedures/{procedure.id}")
 
-    async def create_new_datasheet(procedure: Procedure):
-        datasheet = Datasheet(procedure=procedure)
-        await datasheet.save()
-        print(datasheet.id)
-        ui.navigate.to(f"/datasheets/{datasheet.id}")
-
     procedures = await Procedure.all()
 
     header(current_user)
@@ -30,11 +24,6 @@ async def get_procedures(current_user: CurrentUser):
             current_rev = await procedure.current_rev
             with ui.item().classes("items-center"):
                 ui.link(current_rev.title, f"/procedures/{procedure.id}")
-                ui.html("&nbsp;")
-                ui.button(
-                    "New datasheet",
-                    on_click=lambda p=procedure: create_new_datasheet(p),
-                ).props("flat")
 
     ui.button("New", on_click=create_new_procedure)
 
