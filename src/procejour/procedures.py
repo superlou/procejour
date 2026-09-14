@@ -37,6 +37,22 @@ async def show_procedure(id: int, current_user: CurrentUser):
         datasheet = await Datasheet.create(procedure_rev=current_rev)
         ui.navigate.to(f"/datasheets/{datasheet.id}")
 
+    async def delete():
+        await procedure.delete()
+        ui.navigate.to("/procedures")
+
+    with ui.dialog() as delete_dialog, ui.card():
+        with ui.card_section():
+            ui.label("Delete procedure?").classes("text-h6")
+
+        with ui.card_section():
+            ui.label("This will delete this procedure and all associated datasheets.")
+
+        with ui.card_section():
+            with ui.row():
+                ui.button("Cancel", on_click=delete_dialog.close)
+                ui.button("Delete", on_click=delete)
+
     header(current_user)
 
     ui.link("Procedures", "/procedures")
@@ -62,6 +78,10 @@ async def show_procedure(id: int, current_user: CurrentUser):
                         f"{datasheet.id} {await datasheet.title}",
                         f"/datasheets/{datasheet.id}",
                     )
+
+    ui.button("Delete procedure", on_click=delete_dialog.open).props(
+        "flat color=negative"
+    )
 
 
 @ui.page("/procedures/{id}/edit")
