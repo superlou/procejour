@@ -2,11 +2,12 @@ import json
 
 from nicegui import ui
 
-from procejour.auth import CurrentUser
-from procejour.components.header import header
-from procejour.models import Datasheet, Procedure, ProcedureRev
+from procejour.datasheets import build_procedure_step
 
 from . import humanize
+from .auth import CurrentUser
+from .components.header import header
+from .models import Datasheet, Procedure, ProcedureRev
 
 
 @ui.page("/procedures")
@@ -61,6 +62,7 @@ async def show_procedure(id: int, current_user: CurrentUser):
         ui.label(current_rev.ref_doc)
         ui.label(current_rev.ref_rev)
     ui.link("Edit", f"/procedures/{id}/edit")
+    ui.link("Demo", f"/procedures/{id}/demo")
 
     ui.button("Create datasheet", on_click=create_datasheet)
 
@@ -125,3 +127,16 @@ async def edit_procedure(id: int, current_user: CurrentUser):
         {"content": {"json": current_rev.steps}, "mode": "text"}
     ).classes("w-full h-100")
     ui.button("Save", on_click=save_procedure)
+
+
+@ui.page("/procedures/{id}/demo")
+async def show_procedure(id: int, current_user: CurrentUser):
+    procedure = await Procedure.get(id=id)
+    procedure_rev = await procedure.current_rev
+
+    header(current_user)
+    ui.label(f"{procedure_rev.title} - Demo")
+
+    with ui.list().classes("w-full"):
+        for step in procedure_rev.steps:
+            await build_procedure_step(None, step)

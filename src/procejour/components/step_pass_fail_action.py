@@ -1,16 +1,20 @@
 from nicegui import ui
 
-from procejour.components.datasheet_input import DatasheetInput
-
-from ..models import StepMark, StepMarkPassFail
+from ..components.datasheet_input import DatasheetInput
+from ..models import Datasheet, StepMark, StepMarkPassFail
 from .pass_fail_button import PassFailButton
 from .step_simple_action import determine_autofill, get_current_step_mark
 
 
-async def pass_fail_action_step(step, datasheet):
-    step_mark = await get_current_step_mark(step["id"], datasheet)
-    observation = step_mark.observation["value"] if step_mark else ""
-    pass_fail_mark = step_mark.pass_fail if step_mark else None
+async def pass_fail_action_step(step, datasheet: Datasheet | None):
+    if datasheet is None:
+        step_mark = None
+        observation = ""
+        pass_fail_mark = None
+    else:
+        step_mark = await get_current_step_mark(step["id"], datasheet)
+        observation = step_mark.observation["value"] if step_mark else ""
+        pass_fail_mark = step_mark.pass_fail if step_mark else None
 
     units = None
     if "observation" in step and step["observation"].startswith("decimal"):
@@ -19,6 +23,9 @@ async def pass_fail_action_step(step, datasheet):
             units = tokens[1]
 
     async def save_step():
+        if datasheet is None:
+            return
+
         step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
         step_mark.observation = {"value": observation_input.value}
         match pass_fail_button.value:

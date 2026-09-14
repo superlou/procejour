@@ -21,7 +21,7 @@ async def run_datasheet(datasheet_id: int, current_user: CurrentUser):
             await build_procedure_step(datasheet, step)
 
 
-async def build_procedure_step(datasheet: Datasheet, step: dict):
+async def build_procedure_step(datasheet: Datasheet | None, step: dict):
     print(step)
 
     if step.get("heading", False):

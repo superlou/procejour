@@ -6,7 +6,7 @@ from ..models import Datasheet, StepMark, StepMarkPassFail
 from .done_button import DoneButton
 
 
-async def get_current_step_mark(id: str, datasheet: Datasheet):
+async def get_current_step_mark(id: str, datasheet: Datasheet) -> StepMark | None:
     return (
         await StepMark.filter(step_id=id, datasheet=datasheet)
         .order_by("-timestamp")
@@ -26,13 +26,17 @@ def determine_autofill(step) -> Autofill | None:
     return None
 
 
-async def simple_action_step(step, datasheet):
-    step_mark = await get_current_step_mark(step["id"], datasheet)
-    observation = (
-        step_mark.observation["value"]
-        if step_mark and "value" in step_mark.observation
-        else ""
-    )
+async def simple_action_step(step, datasheet: Datasheet | None):
+    if datasheet is None:
+        step_mark = None
+        observation = ""
+    else:
+        step_mark = await get_current_step_mark(step["id"], datasheet)
+        observation = (
+            step_mark.observation["value"]
+            if step_mark and "value" in step_mark.observation
+            else ""
+        )
 
     units = None
     if "observation" in step and step["observation"].startswith("decimal"):
@@ -41,6 +45,9 @@ async def simple_action_step(step, datasheet):
             units = tokens[1]
 
     async def save_step():
+        if datasheet is None:
+            return
+
         step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
 
         if "observation" in step:
