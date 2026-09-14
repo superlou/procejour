@@ -8,6 +8,7 @@ dependencies = [
     "bcrypt>=5.0.0",
     "nicegui>=3.16.0",
     "tortoise-orm>=1.1.8",
+    "tzdata>=2026.4",
 ]
 
 
