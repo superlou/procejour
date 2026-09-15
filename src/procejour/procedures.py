@@ -139,7 +139,7 @@ async def edit_procedure(id: int, current_user: CurrentUser):
 
 
 @ui.page("/procedures/{id}/demo")
-async def show_procedure(id: int, current_user: CurrentUser):
+async def show_procedure_demo(id: int, current_user: CurrentUser):
     procedure = await Procedure.get(id=id)
     procedure_rev = await procedure.current_rev
 
