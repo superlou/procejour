@@ -61,29 +61,38 @@ async def show_procedure(id: int, current_user: CurrentUser):
     with ui.row():
         ui.label(current_rev.ref_doc)
         ui.label(current_rev.ref_rev)
-    ui.link("Edit", f"/procedures/{id}/edit")
-    ui.link("Demo", f"/procedures/{id}/demo")
 
-    ui.button("Create datasheet", on_click=create_datasheet)
+    with ui.row().classes("w-full"):
+        with ui.column().classes("col"):
+            procedure_revs = await procedure.revs.order_by("-saved_at")
+            with ui.list().props("separator"):
+                for rev in procedure_revs:
+                    ui.item_label(humanize.timestamp(rev.saved_at)).props("header")
 
-    ui.label("Datasheets")
-    procedure_revs = await procedure.revs.order_by("-saved_at")
-    with ui.list().props("separator"):
-        for rev in procedure_revs:
-            ui.item_label(humanize.timestamp(rev.saved_at)).props("header")
+                    ui.separator()
 
-            ui.separator()
+                    for datasheet in await rev.datasheets.order_by("-created_at"):
+                        with ui.item():
+                            ui.link(
+                                f"{datasheet.id} {await datasheet.title}",
+                                f"/datasheets/{datasheet.id}",
+                            )
 
-            for datasheet in await rev.datasheets.order_by("-created_at"):
+        with ui.column().classes("col"):
+            with ui.list().props("bordered separator"):
                 with ui.item():
-                    ui.link(
-                        f"{datasheet.id} {await datasheet.title}",
-                        f"/datasheets/{datasheet.id}",
-                    )
+                    ui.button("Create datasheet", on_click=create_datasheet)
 
-    ui.button("Delete procedure", on_click=delete_dialog.open).props(
-        "flat color=negative"
-    )
+                with ui.item():
+                    ui.link("Demo", f"/procedures/{id}/demo")
+
+                with ui.item():
+                    ui.link("Edit", f"/procedures/{id}/edit")
+
+                with ui.item():
+                    ui.button("Delete", on_click=delete_dialog.open).props(
+                        "flat color=negative"
+                    )
 
 
 @ui.page("/procedures/{id}/edit")
@@ -134,7 +143,13 @@ async def show_procedure(id: int, current_user: CurrentUser):
     procedure = await Procedure.get(id=id)
     procedure_rev = await procedure.current_rev
 
-    sidebar_menu(current_user)
+    header_links = [
+        (f"#{step['id']}", f"{step['num']} {step['heading']}")
+        for step in procedure_rev.steps
+        if "heading" in step
+    ]
+
+    sidebar_menu(current_user, page_links=header_links)
     ui.label(f"{procedure_rev.title} - Demo")
 
     with ui.list().classes("w-full"):
