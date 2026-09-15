@@ -4,7 +4,11 @@ from .. import auth
 from ..models import User
 
 
-def sidebar_menu(current_user: User, expanded=True):
+def sidebar_menu(
+    current_user: User,
+    expanded=True,
+    page_links: list[tuple[str, str]] | None = None,
+):
     with ui.left_drawer(top_corner=True, bordered=True, value=expanded) as left_drawer:
         with ui.row().classes("w-full items-center flex-nowrap"):
             with ui.link(target="/").classes(
@@ -18,6 +22,15 @@ def sidebar_menu(current_user: User, expanded=True):
         ui.link("Procedures", "/procedures")
 
         ui.separator()
+
+        if page_links:
+            with ui.list():
+                for target, link in page_links:
+                    with ui.item():
+                        ui.link(link, target)
+
+            ui.separator()
+
         ui.html(f"Signed in as <b>{current_user.email}</b>").classes("text-no-wrap")
         with ui.link(target="/user"):
             with ui.row().classes("items-center no-wrap"):

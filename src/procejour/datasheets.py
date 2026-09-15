@@ -13,7 +13,13 @@ async def run_datasheet(datasheet_id: int, current_user: CurrentUser):
     datasheet = await Datasheet.get(id=datasheet_id).prefetch_related("procedure_rev")
     procedure_rev = datasheet.procedure_rev
 
-    sidebar_menu(current_user)
+    header_links = [
+        (f"#{step['id']}", f"{step['num']} {step['heading']}")
+        for step in procedure_rev.steps
+        if "heading" in step
+    ]
+
+    sidebar_menu(current_user, page_links=header_links)
     ui.label(procedure_rev.title)
 
     with ui.list().classes("w-full"):
