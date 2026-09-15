@@ -3,7 +3,7 @@ import secrets
 from nicegui import ui
 
 from .auth import CurrentUser, create_salted_hash
-from .components.header import header
+from .components.sidebar_menu import sidebar_menu
 from .models import APIKey
 
 
@@ -26,7 +26,7 @@ async def edit_user_profile(user: CurrentUser):
         list_keys.refresh()
 
     ui.page_title("My Profile")
-    header(user)
+    sidebar_menu(user)
 
     @ui.refreshable
     async def list_keys():

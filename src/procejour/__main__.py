@@ -3,7 +3,7 @@ from tortoise.contrib.fastapi import register_tortoise
 
 from . import admin, auth, datasheets, procedures, users  # noqa: F401
 from .auth import CurrentUser
-from .components.header import header
+from .components.sidebar_menu import sidebar_menu
 from .orm import TORTOISE_ORM
 
 db_url: str = TORTOISE_ORM["connections"]["default"]
@@ -15,7 +15,7 @@ register_tortoise(
 
 @ui.page("/")
 def home(current_user: CurrentUser):
-    header(current_user)
+    sidebar_menu(current_user)
     ui.link("Procedures", "/procedures")
 
 

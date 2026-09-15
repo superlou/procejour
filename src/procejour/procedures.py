@@ -4,9 +4,9 @@ from nicegui import ui
 
 from procejour.datasheets import build_procedure_step
 
-from . import humanize
+from . import auth, humanize
 from .auth import CurrentUser
-from .components.header import header
+from .components.sidebar_menu import sidebar_menu
 from .models import Datasheet, Procedure, ProcedureRev
 
 
@@ -19,7 +19,8 @@ async def get_procedures(current_user: CurrentUser):
 
     procedures = await Procedure.all()
 
-    header(current_user)
+    sidebar_menu(current_user)
+
     with ui.list():
         for procedure in procedures:
             current_rev = await procedure.current_rev
@@ -54,10 +55,9 @@ async def show_procedure(id: int, current_user: CurrentUser):
                 ui.button("Cancel", on_click=delete_dialog.close)
                 ui.button("Delete", on_click=delete)
 
-    header(current_user)
+    sidebar_menu(current_user)
 
-    ui.link("Procedures", "/procedures")
-    ui.label(current_rev.title)
+    ui.label(current_rev.title).classes("text-h2")
     with ui.row():
         ui.label(current_rev.ref_doc)
         ui.label(current_rev.ref_rev)
@@ -113,7 +113,7 @@ async def edit_procedure(id: int, current_user: CurrentUser):
         await rev.save()
         ui.notify("Saved")
 
-    header(current_user)
+    sidebar_menu(current_user)
     ui.link("Procedures", "/procedures")
     title_input = ui.input("Title", value=current_rev.title)
     with ui.row():
@@ -134,7 +134,7 @@ async def show_procedure(id: int, current_user: CurrentUser):
     procedure = await Procedure.get(id=id)
     procedure_rev = await procedure.current_rev
 
-    header(current_user)
+    sidebar_menu(current_user)
     ui.label(f"{procedure_rev.title} - Demo")
 
     with ui.list().classes("w-full"):

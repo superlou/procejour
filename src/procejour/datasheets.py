@@ -1,7 +1,7 @@
 from nicegui import ui
 
 from procejour.auth import CurrentUser
-from procejour.components.header import header
+from procejour.components.sidebar_menu import sidebar_menu
 from procejour.components.step_header import header_step
 from procejour.components.step_pass_fail_action import pass_fail_action_step
 from procejour.components.step_simple_action import simple_action_step
@@ -13,7 +13,7 @@ async def run_datasheet(datasheet_id: int, current_user: CurrentUser):
     datasheet = await Datasheet.get(id=datasheet_id).prefetch_related("procedure_rev")
     procedure_rev = datasheet.procedure_rev
 
-    header(current_user)
+    sidebar_menu(current_user)
     ui.label(procedure_rev.title)
 
     with ui.list().classes("w-full"):
