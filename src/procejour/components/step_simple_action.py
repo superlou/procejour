@@ -2,7 +2,7 @@ from nicegui import ui
 
 from procejour.components.datasheet_input import Autofill, DatasheetInput
 
-from ..models import Datasheet, StepMark, StepMarkPassFail
+from ..models import Datasheet, StepMark, StepMarkPassFail, User
 from .done_button import DoneButton
 
 
@@ -26,7 +26,7 @@ def determine_autofill(step) -> Autofill | None:
     return None
 
 
-async def simple_action_step(step, datasheet: Datasheet | None):
+async def simple_action_step(step, datasheet: Datasheet | None, current_user: User):
     if datasheet is None:
         step_mark = None
         observation = ""
@@ -48,7 +48,9 @@ async def simple_action_step(step, datasheet: Datasheet | None):
         if datasheet is None:
             return
 
-        step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
+        step_mark = StepMark(
+            datasheet=datasheet, step_id=step["id"], comment="", set_by=current_user
+        )
 
         if "observation" in step:
             step_mark.observation = {"value": observation_input.value}

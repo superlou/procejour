@@ -154,4 +154,4 @@ async def show_procedure_demo(id: int, current_user: CurrentUser):
 
     with ui.list().classes("w-full"):
         for step in procedure_rev.steps:
-            await build_procedure_step(None, step)
+            await build_procedure_step(None, step, current_user)

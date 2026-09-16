@@ -1,12 +1,12 @@
 from nicegui import ui
 
 from ..components.datasheet_input import DatasheetInput
-from ..models import Datasheet, StepMark, StepMarkPassFail
+from ..models import Datasheet, StepMark, StepMarkPassFail, User
 from .pass_fail_button import PassFailButton
 from .step_simple_action import determine_autofill, get_current_step_mark
 
 
-async def pass_fail_action_step(step, datasheet: Datasheet | None):
+async def pass_fail_action_step(step, datasheet: Datasheet | None, current_user: User):
     if datasheet is None:
         step_mark = None
         observation = ""
@@ -26,7 +26,9 @@ async def pass_fail_action_step(step, datasheet: Datasheet | None):
         if datasheet is None:
             return
 
-        step_mark = StepMark(datasheet=datasheet, step_id=step["id"], comment="")
+        step_mark = StepMark(
+            datasheet=datasheet, step_id=step["id"], comment="", set_by=current_user
+        )
         step_mark.observation = {"value": observation_input.value}
         match pass_fail_button.value:
             case "unset":

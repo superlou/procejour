@@ -101,6 +101,9 @@ class StepMark(models.Model):
     observation = JSONField(db_default=None)
     pass_fail = CharEnumField(StepMarkPassFail, db_default="un", max_length=2)
     timestamp = DateTimeField(auto_now=True)
+    set_by: ForeignKeyRelation["User"] = ForeignKeyField(
+        "models.User", related_name="step_marks"
+    )
     comment = TextField()
 
 
