@@ -7,11 +7,7 @@ from nicegui.events import ValueChangeEventArguments
 from nicegui.helpers import is_coroutine_function
 
 from procejour.auth import get_user
-
-
-class Autofill(Enum):
-    USER = "user"
-    DATE = "date"
+from procejour.datasheet_utils import Autofill
 
 
 class DatasheetInput:

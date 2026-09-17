@@ -2,7 +2,7 @@ import json
 
 from nicegui import ui
 
-from procejour.datasheets import build_procedure_step
+from procejour.datasheets import build_step
 
 from . import auth, humanize
 from .auth import CurrentUser
@@ -154,4 +154,4 @@ async def show_procedure_demo(id: int, current_user: CurrentUser):
 
     with ui.list().classes("w-full"):
         for step in procedure_rev.steps:
-            await build_procedure_step(None, step, current_user)
+            await build_step(None, step, current_user)
