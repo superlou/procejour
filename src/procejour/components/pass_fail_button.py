@@ -24,9 +24,7 @@ class PassFailButton:
                     PFButton("P", on_click=self.set_pass)
                     PFButton("F", on_click=self.set_fail)
             case "pass":
-                btn = PFButton("Pass", icon="check", on_click=self.clear, color="green")
-                with btn.add_slot("append"):
-                    ui.label("test")
+                PFButton("Pass", icon="check", on_click=self.clear, color="green")
             case "fail":
                 PFButton("Fail", on_click=self.clear, color="red").props(
                     "icon-right=close"
