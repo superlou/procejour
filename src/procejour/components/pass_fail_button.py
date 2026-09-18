@@ -24,11 +24,15 @@ class PassFailButton:
                     PFButton("P", on_click=self.set_pass)
                     PFButton("F", on_click=self.set_fail)
             case "pass":
-                PFButton("Pass", icon="check", on_click=self.clear, color="green")
+                with PFButton(icon="check", on_click=self.clear, color="green"):
+                    ui.label("Pass").classes("gt-md")
+                    ui.label("P").classes("lt-lg")
             case "fail":
-                PFButton("Fail", on_click=self.clear, color="red").props(
+                with PFButton(on_click=self.clear, color="red").props(
                     "icon-right=close"
-                )
+                ):
+                    ui.label("Fail").classes("gt-md")
+                    ui.label("F").classes("lt-lg")
 
     async def call_on_change(self):
         if inspect.iscoroutinefunction(self.on_change):
