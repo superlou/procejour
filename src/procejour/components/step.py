@@ -61,7 +61,11 @@ async def observation_step(
             ui.label(action)
         with ui.item_section().classes("col-span-2"):
             observation_input = DatasheetInput(
-                observation, units, on_commit=commit_and_advance, autofill=autofill
+                observation,
+                units,
+                on_commit=commit_and_advance,
+                on_change=save,
+                autofill=autofill,
             )
         with ui.item_section().classes("col-span-2"):
             ui.label("").classes("text-center")
@@ -107,7 +111,11 @@ async def pass_fail_step(
             ui.label(action)
         with ui.item_section().classes("col-span-2"):
             observation_input = DatasheetInput(
-                observation, units, on_commit=commit_and_advance, autofill=autofill
+                observation,
+                units,
+                on_commit=commit_and_advance,
+                autofill=autofill,
+                on_change=save,
             )
         with ui.item_section().classes("col-span-2"):
             ui.label(specification).classes("text-center")

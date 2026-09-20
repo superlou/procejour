@@ -24,13 +24,15 @@ class DatasheetInput:
         self.on_commit = on_commit
         self.on_change = on_change
         self.autofill = autofill
+        self.save_delay = 1.0
+        self.save_timer: ui.timer | None = None
 
         self.render()
 
     def render(self):
-        self.control = ui.input(value=self.value, on_change=self.update_value).props(
-            "outlined"
-        )
+        self.control = ui.input(value=self.value, on_change=self.update_value)
+        self.control.on("blur", self.immediate_update_value)
+        self.control.props("outlined")
 
         if self.units:
             with self.control.add_slot("append"):
@@ -56,11 +58,25 @@ class DatasheetInput:
 
     async def update_value(self, evt: ValueChangeEventArguments | None = None):
         if self.value != self.control.value:
-            self.control.props("filled")
-        else:
-            self.control.props(remove="filled")
+            if self.save_timer:
+                self.save_timer.cancel()
 
-        await self.call_on_change()
+            self.save_timer = ui.timer(self.save_delay, self.call_on_change, once=True)
+        else:
+            if self.save_timer:
+                self.save_timer.cancel()
+                self.save_timer = None
+
+    async def immediate_update_value(self, evt):
+        if self.value != self.control.value:
+            if self.save_timer:
+                self.save_timer.cancel()
+
+            await self.call_on_change()
+        else:
+            if self.save_timer:
+                self.save_timer.cancel()
+                self.save_timer = None
 
     async def call_on_commit(self):
         self.value = self.control.value
@@ -72,6 +88,8 @@ class DatasheetInput:
             self.on_commit()
 
     async def call_on_change(self):
+        self.value = self.control.value
+
         if is_coroutine_function(self.on_change):
             await self.on_change()
         elif self.on_change:
