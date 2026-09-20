@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable
+from typing import Callable, Literal
 
 from nicegui import ui
 
@@ -40,17 +40,21 @@ class PassFailButton:
         elif self.on_change:
             self.on_change()
 
-    async def set_pass(self):
-        self.value = "pass"
+    async def set(
+        self,
+        value: Literal["pass"] | Literal["fail"] | Literal["unset"],
+        run_callback=True,
+    ):
+        self.value = value
         self._render.refresh()
-        await self.call_on_change()
+        if run_callback:
+            await self.call_on_change()
 
-    async def set_fail(self):
-        self.value = "fail"
-        self._render.refresh()
-        await self.call_on_change()
+    async def set_pass(self, run_callback=True):
+        await self.set("pass", run_callback)
 
-    async def clear(self):
-        self.value = "unset"
-        self._render.refresh()
-        await self.call_on_change()
+    async def set_fail(self, run_callback=True):
+        await self.set("fail", run_callback)
+
+    async def clear(self, run_callback=True):
+        await self.set("unset", run_callback)

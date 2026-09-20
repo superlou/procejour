@@ -44,6 +44,9 @@ class DatasheetInput:
 
         self.control.on("keydown.enter", self.call_on_commit)
 
+    def take_focus(self):
+        self.control.run_method("focus")
+
     async def run_autofill(self):
         match self.autofill:
             case Autofill.USER:

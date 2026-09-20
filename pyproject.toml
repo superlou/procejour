@@ -14,3 +14,8 @@ dependencies = [
 
 [tool.tortoise]
 tortoise_orm = "procejour.orm.TORTOISE_ORM"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

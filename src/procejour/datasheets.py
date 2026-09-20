@@ -1,3 +1,6 @@
+from collections import Counter
+from typing import Coroutine
+
 from nicegui import ui
 
 from procejour.auth import CurrentUser
@@ -11,6 +14,7 @@ from procejour.components.step import (
 from procejour.components.step_header import header_step
 from procejour.datasheet_utils import determine_autofill, get_current_step_mark
 from procejour.models import Datasheet, StepMark, StepMarkPassFail, User
+from procejour.observation_check import observation_meets_spec
 
 
 @ui.page("/datasheets/{datasheet_id}")
@@ -27,26 +31,48 @@ async def run_datasheet(datasheet_id: int, current_user: CurrentUser):
     sidebar_menu(current_user, page_links=header_links)
     ui.label(procedure_rev.title)
 
+    step_focus_targets = {}
+
+    async def advance(current_step_id: int):
+        # todo Kinda gross
+        found = False
+        next_focus_target = None
+        for step_id, focus_target in step_focus_targets.items():
+            if step_id == current_step_id:
+                found = True
+                continue
+
+            if found and focus_target is not None:
+                next_focus_target = focus_target
+                break
+
+        if next_focus_target is not None:
+            focus_target.take_focus()
+
     with ui.list().classes("w-full"):
         for step in procedure_rev.steps:
-            await build_step(datasheet, step, current_user)
+            step_focus_targets[step["id"]] = await build_step(
+                datasheet, step, current_user, advance
+            )
 
 
-async def build_step(datasheet: Datasheet | None, step: dict, current_user: User):
+async def build_step(
+    datasheet: Datasheet | None, step: dict, current_user: User, advance: Coroutine
+):
     print(step)
 
     if step.get("heading", False):
         header_step(step)
     elif step.get("specification", False):
-        await build_pass_fail_step(datasheet, step, current_user)
+        return await build_pass_fail_step(datasheet, step, current_user, advance)
     elif "observation" in step:
-        await build_observation_step(datasheet, step, current_user)
+        return await build_observation_step(datasheet, step, current_user, advance)
     else:
-        await build_no_observation_step(datasheet, step, current_user)
+        return await build_no_observation_step(datasheet, step, current_user, advance)
 
 
 async def build_no_observation_step(
-    datasheet: Datasheet | None, step: dict, current_user: User
+    datasheet: Datasheet | None, step: dict, current_user: User, advance: Coroutine
 ):
     if datasheet is None:
         done = False
@@ -65,11 +91,17 @@ async def build_no_observation_step(
         step_mark.pass_fail = StepMarkPassFail.DONE if done else StepMarkPassFail.UNSET
         await step_mark.save()
 
-    await no_observation_step(step["num"], step["action"], done, save_step)
+    return await no_observation_step(
+        step["num"],
+        step["action"],
+        done,
+        save_step,
+        advance=lambda: advance(step["id"]),
+    )
 
 
 async def build_observation_step(
-    datasheet: Datasheet | None, step: dict, current_user: User
+    datasheet: Datasheet | None, step: dict, current_user: User, advance: Coroutine
 ):
     if datasheet is None:
         observation = ""
@@ -100,7 +132,7 @@ async def build_observation_step(
         if len(tokens) > 1:
             units = tokens[1]
 
-    await observation_step(
+    return await observation_step(
         step["num"],
         step["action"],
         observation,
@@ -108,11 +140,12 @@ async def build_observation_step(
         done,
         determine_autofill(step),
         save_step,
+        advance=lambda: advance(step["id"]),
     )
 
 
 async def build_pass_fail_step(
-    datasheet: Datasheet | None, step: dict, current_user: User
+    datasheet: Datasheet | None, step: dict, current_user: User, advance: Coroutine
 ):
     if datasheet is None:
         observation = ""
@@ -150,18 +183,23 @@ async def build_pass_fail_step(
         await step_mark.save()
 
     units = ""
+    format = None
     if step["observation"].startswith("decimal"):
         tokens = step["observation"].split(" ")
+        if len(tokens) > 0:
+            format = tokens[0]
         if len(tokens) > 1:
             units = tokens[1]
 
-    await pass_fail_step(
+    return await pass_fail_step(
         step["num"],
         step["action"],
         observation,
+        format,
         units,
         step["specification"],
         result,
         determine_autofill(step),
         save_step,
+        advance=lambda: advance(step["id"]),
     )

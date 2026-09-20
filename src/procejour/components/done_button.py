@@ -19,9 +19,14 @@ class DoneButton:
     @ui.refreshable_method
     def _render(self):
         if self.value:
-            BigButton(icon="check_box", on_click=self.clear, color="black")
+            self.control = BigButton(
+                icon="check_box", on_click=self.clear, color="black"
+            )
         else:
-            BigButton(icon="check_box_outline_blank", on_click=self.set)
+            self.control = BigButton(icon="check_box_outline_blank", on_click=self.set)
+
+    def take_focus(self):
+        ui.run_javascript(f"getHtmlElement({self.control.id}).focus()")
 
     async def call_on_change(self):
         if inspect.iscoroutinefunction(self.on_change):
@@ -29,12 +34,14 @@ class DoneButton:
         elif self.on_change:
             self.on_change()
 
-    async def set(self):
+    async def set(self, run_callback=True):
         self.value = True
         self._render.refresh()
-        await self.call_on_change()
+        if run_callback:
+            await self.call_on_change()
 
-    async def clear(self):
+    async def clear(self, run_callback=True):
         self.value = False
         self._render.refresh()
-        await self.call_on_change()
+        if run_callback:
+            await self.call_on_change()
