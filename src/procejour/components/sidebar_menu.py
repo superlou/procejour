@@ -24,7 +24,7 @@ def sidebar_menu(
         ui.separator()
 
         if page_links:
-            with ui.list():
+            with ui.list().props("dense"):
                 for target, link in page_links:
                     with ui.item():
                         ui.link(link, target)

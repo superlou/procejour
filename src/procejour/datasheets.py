@@ -4,7 +4,6 @@ from typing import Coroutine
 from nicegui import ui
 
 from procejour.auth import CurrentUser
-from procejour.components.datasheet_input import Autofill
 from procejour.components.sidebar_menu import sidebar_menu
 from procejour.components.step import (
     no_observation_step,
@@ -13,20 +12,28 @@ from procejour.components.step import (
 )
 from procejour.components.step_header import header_step
 from procejour.datasheet_utils import determine_autofill, get_current_step_mark
-from procejour.models import Datasheet, StepMark, StepMarkPassFail, User
-from procejour.observation_check import observation_meets_spec
+from procejour.models import Datasheet, ProcedureRev, StepMark, StepMarkPassFail, User
 
 
 @ui.page("/datasheets/{datasheet_id}")
 async def run_datasheet(datasheet_id: int, current_user: CurrentUser):
     datasheet = await Datasheet.get(id=datasheet_id).prefetch_related("procedure_rev")
     procedure_rev = datasheet.procedure_rev
+    await build_datasheet(datasheet, procedure_rev, current_user)
 
+
+async def build_datasheet(
+    datasheet: Datasheet | None, procedure_rev: ProcedureRev, current_user: CurrentUser
+):
+    await procedure_rev.fetch_related("procedure")
     header_links = [
         (f"#{step['id']}", f"{step['num']} {step['heading']}")
         for step in procedure_rev.steps
         if "heading" in step
     ]
+    header_links.insert(
+        0, (f"/procedures/{procedure_rev.procedure.id}", procedure_rev.title)
+    )
 
     sidebar_menu(current_user, page_links=header_links)
     ui.label(procedure_rev.title)

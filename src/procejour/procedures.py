@@ -2,11 +2,10 @@ import json
 
 from nicegui import ui
 
-from procejour.datasheets import build_step
-
-from . import auth, humanize
+from . import humanize
 from .auth import CurrentUser
 from .components.sidebar_menu import sidebar_menu
+from .datasheets import build_datasheet
 from .models import Datasheet, Procedure, ProcedureRev
 
 
@@ -142,16 +141,4 @@ async def edit_procedure(id: int, current_user: CurrentUser):
 async def show_procedure_demo(id: int, current_user: CurrentUser):
     procedure = await Procedure.get(id=id)
     procedure_rev = await procedure.current_rev
-
-    header_links = [
-        (f"#{step['id']}", f"{step['num']} {step['heading']}")
-        for step in procedure_rev.steps
-        if "heading" in step
-    ]
-
-    sidebar_menu(current_user, page_links=header_links)
-    ui.label(f"{procedure_rev.title} - Demo")
-
-    with ui.list().classes("w-full"):
-        for step in procedure_rev.steps:
-            await build_step(None, step, current_user)
+    await build_datasheet(None, procedure_rev, current_user)
