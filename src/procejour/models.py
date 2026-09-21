@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from enum import Enum, EnumCheck
 
@@ -73,12 +75,15 @@ class Datasheet(models.Model):
         title = re.sub(pattern, replacer, title)
         return title
 
-    async def step_mark_observation(self, step_id: str):
-        step_mark = (
+    async def step_mark_by_id(self, step_id: str) -> StepMark | None:
+        return (
             await StepMark.filter(step_id=step_id, datasheet=self)
             .order_by("-timestamp")
             .first()
         )
+
+    async def step_mark_observation(self, step_id: str):
+        step_mark = await self.step_mark_by_id(step_id)
         if step_mark:
             return step_mark.observation["value"]
         else:
