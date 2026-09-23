@@ -4,13 +4,14 @@ import plotly.graph_objects as go
 from nicegui import ui
 from pandas import DataFrame
 
-from procejour.observation_check import observation_value
-
 from . import humanize
 from .auth import CurrentUser
+from .components.procedure_header import procedure_header
+from .components.procedure_menu import procedure_menu
 from .components.sidebar_menu import sidebar_menu
 from .datasheets import build_datasheet
 from .models import Datasheet, Procedure, ProcedureRev
+from .observation_check import observation_value
 
 
 @ui.page("/procedures")
@@ -59,46 +60,23 @@ async def show_procedure(id: int, current_user: CurrentUser):
                 ui.button("Delete", on_click=delete)
 
     sidebar_menu(current_user)
-
-    ui.label(current_rev.title).classes("text-h2")
-    with ui.row():
-        ui.label(current_rev.ref_doc)
-        ui.label(current_rev.ref_rev)
+    await procedure_header(current_rev)
+    await procedure_menu(procedure, current_rev)
 
     with ui.row().classes("w-full"):
-        with ui.column().classes("col"):
-            procedure_revs = await procedure.revs.order_by("-saved_at")
-            with ui.list().props("separator"):
-                for rev in procedure_revs:
-                    ui.item_label(humanize.timestamp(rev.saved_at)).props("header")
+        procedure_revs = await procedure.revs.order_by("-saved_at")
+        with ui.list().props("separator"):
+            for rev in procedure_revs:
+                ui.item_label(humanize.timestamp(rev.saved_at)).props("header")
 
-                    ui.separator()
+                ui.separator()
 
-                    for datasheet in await rev.datasheets.order_by("-created_at"):
-                        with ui.item():
-                            ui.link(
-                                f"{datasheet.id} {await datasheet.title}",
-                                f"/datasheets/{datasheet.id}",
-                            )
-
-        with ui.column().classes("col"):
-            with ui.list().props("bordered separator"):
-                with ui.item():
-                    ui.button("Create datasheet", on_click=create_datasheet)
-
-                with ui.item():
-                    ui.link("Demo", f"/procedures/{id}/demo")
-
-                with ui.item():
-                    ui.link("Statistics", f"/procedures/{id}/stats")
-
-                with ui.item():
-                    ui.link("Edit", f"/procedures/{id}/edit")
-
-                with ui.item():
-                    ui.button("Delete", on_click=delete_dialog.open).props(
-                        "flat color=negative"
-                    )
+                for datasheet in await rev.datasheets.order_by("-created_at"):
+                    with ui.item():
+                        ui.link(
+                            f"{datasheet.id} {await datasheet.title}",
+                            f"/datasheets/{datasheet.id}",
+                        )
 
 
 @ui.page("/procedures/{id}/edit")
@@ -129,7 +107,9 @@ async def edit_procedure(id: int, current_user: CurrentUser):
         ui.notify("Saved")
 
     sidebar_menu(current_user)
-    ui.link("Procedures", "/procedures")
+    await procedure_header(current_rev)
+    await procedure_menu(procedure, current_rev)
+
     title_input = ui.input("Title", value=current_rev.title)
     with ui.row():
         ref_doc_input = ui.input("Reference Document", value=current_rev.ref_doc)
@@ -157,10 +137,8 @@ async def show_procedure_stats(id: int, current_user: CurrentUser):
     current_rev = await procedure.current_rev
 
     sidebar_menu(current_user)
-    ui.label(current_rev.title).classes("text-h2")
-    with ui.row():
-        ui.label(current_rev.ref_doc)
-        ui.label(current_rev.ref_rev)
+    await procedure_header(current_rev)
+    await procedure_menu(procedure, current_rev)
 
     datapoints = []
     for step in current_rev.steps:
