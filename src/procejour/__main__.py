@@ -20,4 +20,9 @@ def home(current_user: CurrentUser):
 
 
 secret = "osLj63o3qH4Kncmv6x6vRmyiqD8g/nPEMQQEl7JFZh4="
-ui.run(storage_secret=secret, fastapi_docs=True)
+ui.run(
+    storage_secret=secret,
+    fastapi_docs=True,
+    title="Procejour",
+    favicon="✅",
+)
