@@ -73,7 +73,7 @@ class Datasheet(models.Model):
             return data.get(key, "")
 
         title = re.sub(pattern, replacer, title)
-        return title
+        return title.strip()
 
     async def step_mark_by_id(self, step_id: str) -> StepMark | None:
         return (

@@ -63,20 +63,27 @@ async def show_procedure(id: int, current_user: CurrentUser):
     await procedure_header(current_rev)
     await procedure_menu(procedure, current_rev)
 
-    with ui.row().classes("w-full"):
+    with ui.grid(columns="auto 1fr auto auto").classes("w-full"):
         procedure_revs = await procedure.revs.order_by("-saved_at")
-        with ui.list().props("separator"):
-            for rev in procedure_revs:
-                ui.item_label(humanize.timestamp(rev.saved_at)).props("header")
 
-                ui.separator()
+        ui.label("ID").classes("text-weight-bold")
+        ui.label("Title").classes("text-weight-bold")
+        ui.label("Created").classes("text-weight-bold")
+        ui.label("Procedure Revision").classes("text-weight-bold")
 
-                for datasheet in await rev.datasheets.order_by("-created_at"):
-                    with ui.item():
-                        ui.link(
-                            f"{datasheet.id} {await datasheet.title}",
-                            f"/datasheets/{datasheet.id}",
-                        )
+        for rev in procedure_revs:
+            rev_saved = humanize.timestamp(rev.saved_at)
+            datasheets = await rev.datasheets.order_by("-created_at")
+
+            for i, datasheet in enumerate(datasheets):
+                ui.label(f"#{datasheet.id}")
+                created_at = humanize.timestamp(datasheet.created_at)
+
+                title = await datasheet.title
+                title = title if title != "" else "(untitled)"
+                ui.link(title, f"/datasheets/{datasheet.id}")
+                ui.label(created_at)
+                ui.label(rev_saved if i == 0 else "")
 
 
 @ui.page("/procedures/{id}/edit")
