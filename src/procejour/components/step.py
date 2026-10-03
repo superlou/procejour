@@ -135,6 +135,7 @@ async def pass_fail_step(
         with ui.item_section().classes("col-span-2"):
             ui.label(args.specification).classes("text-center")
         with ui.item_section().classes("col-span-1"):
-            pass_fail_button = PassFailButton(args.result, on_change=save).bind_enabled_from(args, "enabled")
+            pass_fail_button = PassFailButton(args.result, on_change=save)
+            pass_fail_button.bind_enabled_from(args, "enabled")
 
     return observation_input

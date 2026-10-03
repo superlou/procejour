@@ -6,7 +6,8 @@ from procejour.components.pass_fail_button import PassFailButton
 @ui.page("/tests/controls")
 def test_controls():
     state = {
-        "enabled": True
+        "enabled": True,
+        "pass_fail": "unset",
     }
 
     ui.checkbox("Enabled").bind_value(state, "enabled")
@@ -15,4 +16,8 @@ def test_controls():
     DoneButton().bind_enabled_from(state, "enabled")
 
     ui.label("PassFailButton")
-    PassFailButton().bind_enabled_from(state, "enabled")
+    ui.select(["unset", "pass", "fail"]).bind_value(state, "pass_fail")
+    (PassFailButton()
+        .bind_enabled_from(state, "enabled")
+        .bind_value(state, "pass_fail")
+        .on_value_change(lambda val: ui.notify(val)))

@@ -5,6 +5,7 @@ from nicegui import ui
 from nicegui.binding import BindableProperty
 from nicegui.elements.mixins.disableable_element import DisableableElement
 from nicegui.elements.mixins.text_element import TextElement
+from nicegui.elements.mixins.value_element import ValueElement
 
 
 class PFButton(ui.button):
@@ -13,12 +14,9 @@ class PFButton(ui.button):
         self.props("outline dense").classes("q-py-md w-full")
 
 
-class PassFailButton(ui.button_group, DisableableElement):
-    value = BindableProperty()
-
+class PassFailButton(DisableableElement, ValueElement, ui.button_group):
     def __init__(self, value="unset", on_change: Callable | None = None):
-        super().__init__()
-        self.value = value
+        super().__init__(value=value, on_value_change=lambda val: self.set(val.value))
         self.on_change = on_change
         self.props("outline dense").classes("w-full")
         self._render()
@@ -54,7 +52,7 @@ class PassFailButton(ui.button_group, DisableableElement):
 
     async def set(
         self,
-        value: Literal["pass"] | Literal["fail"] | Literal["unset"],
+        value: Literal["pass", "fail", "unset"],
         run_callback=True,
     ):
         self.value = value
