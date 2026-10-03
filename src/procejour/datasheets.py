@@ -1,17 +1,23 @@
 from collections import Counter
-from typing import Coroutine
+from typing import Coroutine, Literal
 
-from nicegui import ui
+from nicegui import binding, ui
 
 from procejour.auth import CurrentUser
 from procejour.components.sidebar_menu import sidebar_menu
 from procejour.components.step import (
+    ObservationStepArgs,
+    PassFailStepArgs,
     no_observation_step,
     observation_step,
     pass_fail_step,
 )
 from procejour.components.step_header import header_step
-from procejour.datasheet_utils import determine_autofill, get_current_step_mark
+from procejour.datasheet_utils import (
+    Autofill,
+    determine_autofill,
+    get_current_step_mark,
+)
 from procejour.models import Datasheet, ProcedureRev, StepMark, StepMarkPassFail, User
 
 
@@ -110,17 +116,20 @@ async def build_no_observation_step(
 async def build_observation_step(
     datasheet: Datasheet | None, step: dict, current_user: User, advance: Coroutine
 ):
-    if datasheet is None:
-        observation = ""
-        done = False
-    else:
+    args = ObservationStepArgs(
+        num=step["num"],
+        action=step["action"],
+        autofill=determine_autofill(step),
+    )
+
+    if datasheet:
         step_mark = await get_current_step_mark(step["id"], datasheet)
-        observation = (
+        args.observation = (
             step_mark.observation["value"]
             if step_mark and "value" in step_mark.observation
             else ""
         )
-        done = step_mark.pass_fail == StepMarkPassFail.DONE if step_mark else False
+        args.done = step_mark.pass_fail == StepMarkPassFail.DONE if step_mark else False
 
     async def save_step(observation, done):
         if datasheet is None:
@@ -133,19 +142,13 @@ async def build_observation_step(
         step_mark.pass_fail = StepMarkPassFail.DONE if done else StepMarkPassFail.UNSET
         await step_mark.save()
 
-    units = ""
     if step["observation"].startswith("decimal"):
         tokens = step["observation"].split(" ")
         if len(tokens) > 1:
-            units = tokens[1]
+            args.units = tokens[1]
 
     return await observation_step(
-        step["num"],
-        step["action"],
-        observation,
-        units,
-        done,
-        determine_autofill(step),
+        args,
         save_step,
         advance=lambda: advance(step["id"]),
     )
@@ -154,23 +157,27 @@ async def build_observation_step(
 async def build_pass_fail_step(
     datasheet: Datasheet | None, step: dict, current_user: User, advance: Coroutine
 ):
-    if datasheet is None:
-        observation = ""
-        result = "unset"
-    else:
+    args = PassFailStepArgs(
+        num=step["num"],
+        action=step["action"],
+        specification=step["specification"],
+        autofill=determine_autofill(step),
+    )
+
+    if datasheet:
         step_mark = await get_current_step_mark(step["id"], datasheet)
-        observation = (
+        args.observation = (
             step_mark.observation["value"]
             if step_mark and "value" in step_mark.observation
             else ""
         )
         match step_mark:
             case StepMark(pass_fail=StepMarkPassFail.PASS):
-                result = "pass"
+                args.result = "pass"
             case StepMark(pass_fail=StepMarkPassFail.FAIL):
-                result = "fail"
+                args.result = "fail"
             case _:
-                result = "unset"
+                args.result = "unset"
 
     async def save_step(observation, result):
         if datasheet is None:
@@ -189,24 +196,15 @@ async def build_pass_fail_step(
 
         await step_mark.save()
 
-    units = ""
-    format = None
     if step["observation"].startswith("decimal"):
         tokens = step["observation"].split(" ")
         if len(tokens) > 0:
-            format = tokens[0]
+            args.format = tokens[0]
         if len(tokens) > 1:
-            units = tokens[1]
+            args.units = tokens[1]
 
     return await pass_fail_step(
-        step["num"],
-        step["action"],
-        observation,
-        format,
-        units,
-        step["specification"],
-        result,
-        determine_autofill(step),
+        args,
         save_step,
         advance=lambda: advance(step["id"]),
     )

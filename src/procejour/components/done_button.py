@@ -4,29 +4,22 @@ from typing import Callable
 from nicegui import ui
 
 
-class BigButton(ui.button):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.props("outline dense").classes("q-py-md w-full")
-
-
-class DoneButton:
+class DoneButton(ui.button):
     def __init__(self, value: bool = False, on_change: Callable | None = None):
+        super().__init__(on_click=self.click)
+        self.props("outline dense").classes("q-py-md w-full")
         self.value = value
         self.on_change = on_change
-        self._render()
 
-    @ui.refreshable_method
-    def _render(self):
-        if self.value:
-            self.control = BigButton(
-                icon="check_box", on_click=self.clear, color="black"
-            )
-        else:
-            self.control = BigButton(icon="check_box_outline_blank", on_click=self.set)
+        self.bind_icon_from(
+            self, "value", lambda x: "check_box" if x else "check_box_outline_blank"
+        )
+        self.bind_background_color_from(
+            self, "value", lambda x: "black" if x else "primary"
+        )
 
     def take_focus(self):
-        ui.run_javascript(f"getHtmlElement({self.control.id}).focus()")
+        ui.run_javascript(f"getHtmlElement({self.id}).focus()")
 
     async def call_on_change(self):
         if inspect.iscoroutinefunction(self.on_change):
@@ -34,14 +27,18 @@ class DoneButton:
         elif self.on_change:
             self.on_change()
 
-    async def set(self, run_callback=True):
+    async def click(self):
+        if self.value:
+            await self.clear_button()
+        else:
+            await self.set_button()
+
+    async def set_button(self, run_callback=True):
         self.value = True
-        self._render.refresh()
         if run_callback:
             await self.call_on_change()
 
-    async def clear(self, run_callback=True):
+    async def clear_button(self, run_callback=True):
         self.value = False
-        self._render.refresh()
         if run_callback:
             await self.call_on_change()
