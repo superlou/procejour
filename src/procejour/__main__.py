@@ -1,7 +1,7 @@
 from nicegui import app, ui
 from tortoise.contrib.fastapi import register_tortoise
 
-from . import admin, auth, datasheets, procedures, users  # noqa: F401
+from . import admin, auth, datasheets, procedures, tests, users  # noqa: F401
 from .auth import CurrentUser
 from .components.sidebar_menu import sidebar_menu
 from .orm import TORTOISE_ORM

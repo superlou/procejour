@@ -2,6 +2,9 @@ import inspect
 from typing import Callable, Literal
 
 from nicegui import ui
+from nicegui.binding import BindableProperty
+from nicegui.elements.mixins.disableable_element import DisableableElement
+from nicegui.elements.mixins.text_element import TextElement
 
 
 class PFButton(ui.button):
@@ -10,29 +13,38 @@ class PFButton(ui.button):
         self.props("outline dense").classes("q-py-md w-full")
 
 
-class PassFailButton:
+class PassFailButton(ui.button_group, DisableableElement):
+    value = BindableProperty()
+
     def __init__(self, value="unset", on_change: Callable | None = None):
+        super().__init__()
         self.value = value
         self.on_change = on_change
+        self.props("outline dense").classes("w-full")
         self._render()
 
     @ui.refreshable_method
     def _render(self):
-        match self.value:
-            case "unset":
-                with ui.button_group().props("outline dense").classes("w-full"):
+        with self:
+            self.clear()
+            match self.value:
+                case "unset":
                     PFButton("P", on_click=self.set_pass)
                     PFButton("F", on_click=self.set_fail)
-            case "pass":
-                with PFButton(icon="check", on_click=self.clear, color="green"):
-                    ui.label("Pass").classes("gt-md")
-                    ui.label("P").classes("lt-lg")
-            case "fail":
-                with PFButton(on_click=self.clear, color="red").props(
-                    "icon-right=close"
-                ):
-                    ui.label("Fail").classes("gt-md")
-                    ui.label("F").classes("lt-lg")
+                case "pass":
+                    with PFButton(icon="check", on_click=self.reset, color="green"):
+                        ui.label("Pass").classes("gt-md")
+                        ui.label("P").classes("lt-lg")
+                case "fail":
+                    with PFButton(on_click=self.reset, color="red").props(
+                        "icon-right=close"
+                    ):
+                        ui.label("Fail").classes("gt-md")
+                        ui.label("F").classes("lt-lg")
+
+        for button in self:
+            if isinstance(button, ui.button):
+                button.bind_enabled_from(self, "enabled")
 
     async def call_on_change(self):
         if inspect.iscoroutinefunction(self.on_change):
@@ -56,5 +68,5 @@ class PassFailButton:
     async def set_fail(self, run_callback=True):
         await self.set("fail", run_callback)
 
-    async def clear(self, run_callback=True):
+    async def reset(self, run_callback=True):
         await self.set("unset", run_callback)

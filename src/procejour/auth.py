@@ -12,6 +12,7 @@ unauthenticated_page_routes = {
     "/login",
     "/users/new",
     "/openapi.json",
+    "/tests/controls"
 }
 
 
