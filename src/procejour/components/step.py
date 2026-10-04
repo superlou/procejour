@@ -112,12 +112,13 @@ async def pass_fail_step(
                 else "fail"
             )
 
-        await pass_fail_button.set(pf, run_callback=False)
+        pass_fail_button.set_value(pf)
         await save()
         await advance()
 
     async def save():
         await save_step(observation_input.value, pass_fail_button.value)
+        print("saved in save")
 
     with ui.item().classes("grid grid-cols-12 w-full"):
         with ui.item_section().classes("col-span-1"):
@@ -135,7 +136,8 @@ async def pass_fail_step(
         with ui.item_section().classes("col-span-2"):
             ui.label(args.specification).classes("text-center")
         with ui.item_section().classes("col-span-1"):
-            pass_fail_button = PassFailButton(args.result, on_change=save)
-            pass_fail_button.bind_enabled_from(args, "enabled")
+            pass_fail_button = PassFailButton(args.result)
+            # Only save on user inputs, not programmatic change of value
+            pass_fail_button.on("click", save).bind_enabled_from(args, "enabled")
 
     return observation_input
