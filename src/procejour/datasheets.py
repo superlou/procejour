@@ -4,6 +4,7 @@ from typing import Coroutine, Literal
 from nicegui import binding, ui
 
 from procejour.auth import CurrentUser
+from procejour.components.datasheet_header import datasheet_header
 from procejour.components.sidebar_menu import sidebar_menu
 from procejour.components.step import (
     ObservationStepArgs,
@@ -18,7 +19,15 @@ from procejour.datasheet_utils import (
     determine_autofill,
     get_current_step_mark,
 )
-from procejour.models import Datasheet, ProcedureRev, StepMark, StepMarkPassFail, User
+from procejour.models import (
+    Datasheet,
+    DatasheetReview,
+    ProcedureRev,
+    ReviewResult,
+    StepMark,
+    StepMarkPassFail,
+    User,
+)
 
 
 @ui.page("/datasheets/{datasheet_id}")
@@ -31,6 +40,8 @@ async def run_datasheet(datasheet_id: int, current_user: CurrentUser):
 async def build_datasheet(
     datasheet: Datasheet | None, procedure_rev: ProcedureRev, current_user: CurrentUser
 ):
+    state = {"review_visible": False}
+
     await procedure_rev.fetch_related("procedure")
     header_links = [
         (f"#{step['id']}", f"{step['num']} {step['heading']}")
@@ -42,7 +53,58 @@ async def build_datasheet(
     )
 
     sidebar_menu(current_user, page_links=header_links)
-    ui.label(procedure_rev.title)
+
+    def toggle_review():
+        state["review_visible"] = not state["review_visible"]
+
+    async def save_review():
+        match review_result.value:
+            case "Incomplete":
+                result = ReviewResult.INCOMPLETE
+            case "Pass":
+                result = ReviewResult.PASS
+            case "Fail":
+                result = ReviewResult.FAIL
+            case _:
+                result = ReviewResult.INCOMPLETE
+
+        review = DatasheetReview(
+            datasheet=datasheet,
+            reviewer=current_user,
+            result=result,
+            comments=review_comments.value,
+        )
+        await review.save()
+        state["review_visible"] = False
+        review_result.value = "Incomplete"
+        review_comments.value = ""
+
+    if datasheet:
+        async with datasheet_header(procedure_rev, datasheet, current_user):
+            if current_user.qa:
+                ui.button("Review", on_click=toggle_review).props("outline")
+
+    else:
+        ui.label(procedure_rev.title + " (demo)").classes("text-h6")
+
+    with (
+        ui.card()
+        .bind_visibility_from(state, "review_visible")
+        .classes("w-full")
+        .props("flat bordered")
+        .tight()
+    ):
+        with ui.card_section():
+            ui.label("Review")
+            review_result = ui.select(
+                ["Incomplete", "Pass", "Fail"], label="Status", value="Incomplete"
+            )
+            review_comments = ui.textarea("Comments").classes("w-full")
+
+        ui.separator()
+
+        with ui.card_actions():
+            ui.button("Submit", on_click=save_review)
 
     step_focus_targets = {}
 

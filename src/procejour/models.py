@@ -15,6 +15,7 @@ from tortoise.fields import (
     IntField,
     JSONField,
     ManyToManyRelation,
+    ReverseRelation,
     TextField,
 )
 
@@ -58,6 +59,8 @@ class Datasheet(models.Model):
     procedure_rev: ForeignKeyRelation[ProcedureRev] = ForeignKeyField(
         "models.ProcedureRev", related_name="datasheets"
     )
+
+    reviews: ReverseRelation["DatasheetReview"]
 
     @property
     async def title(self) -> str:
@@ -118,11 +121,32 @@ class User(models.Model):
     name = CharField(max_length=255, default="")
     code = CharField(max_length=255, default="")
     password_hash = CharField(max_length=255)
-    admin = BooleanField(default=False)
+    admin = BooleanField(db_default=False)
+    qa = BooleanField(db_default=False)
     api_access = BooleanField(db_default=False)
+
+    reviews: ReverseRelation["DatasheetReview"]
 
 
 class APIKey(models.Model):
     id = IntField(pk=True)
     user = ForeignKeyField("models.User", related_name="api_keys")
     key = CharField(max_length=255)
+
+
+class ReviewResult(Enum):
+    INCOMPLETE = "i"
+    PASS = "p"
+    FAIL = "f"
+
+
+class DatasheetReview(models.Model):
+    datasheet: ForeignKeyRelation[Datasheet] = ForeignKeyField(
+        "models.Datasheet", related_name="reviews"
+    )
+    reviewer: ForeignKeyRelation[User] = ForeignKeyField(
+        "models.User", related_name="reviews"
+    )
+    completed_at = DateTimeField(auto_now=True)
+    result = CharEnumField(ReviewResult, db_default="i", max_length=2)
+    comments = TextField()

@@ -14,6 +14,10 @@ async def users(user: CurrentUser):
         user.admin = value
         await user.save()
 
+    async def update_user_qa(user, value):
+        user.qa = value
+        await user.save()
+
     async def update_user_api_access(user, value):
         user.api_access = value
         await user.save()
@@ -81,6 +85,8 @@ async def users(user: CurrentUser):
                 with ui.item_section().classes("col-3"):
                     ui.item_label("User").props("header").classes("text-bold")
                 with ui.item_section().classes("col-2"):
+                    ui.item_label("QA").props("header").classes("text-bold")
+                with ui.item_section().classes("col-2"):
                     ui.item_label("Admin").props("header").classes("text-bold")
                 with ui.item_section().classes("col-1"):
                     ui.item_label("API").props("header").classes("text-bold")
@@ -93,6 +99,13 @@ async def users(user: CurrentUser):
                         ui.label(user.name)
                         ui.label(user.email).classes("text-caption")
                         ui.label(user.code).classes("text-caption")
+                    with ui.item_section().classes("col-2"):
+                        ui.checkbox(
+                            value=user.qa,
+                            on_change=lambda evt, user=user: update_user_qa(
+                                user, evt.value
+                            ),
+                        )
                     with ui.item_section().classes("col-2"):
                         ui.checkbox(
                             value=user.admin,
