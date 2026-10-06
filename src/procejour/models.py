@@ -92,6 +92,34 @@ class Datasheet(models.Model):
         else:
             return ""
 
+    @property
+    async def fully_reviewed(self) -> bool:
+        # 1. All steps must have a StepMark
+        step_marks = {
+            step["id"]: await self.step_mark_by_id(step["id"])
+            for step in self.procedure_rev.steps
+            if "heading" not in step
+        }
+
+        if None in step_marks.values():
+            return False
+
+        # 2. The datasheet must have a review complete (pass or fail) review.
+        latest_review = await self.reviews.all().latest("completed_at")
+        if latest_review is None:
+            return False
+
+        if latest_review.result == ReviewResult.INCOMPLETE:
+            return False
+
+        # 3. All StepMarks must be created before the review.
+        step_marks_before_review = [
+            step_mark.timestamp < latest_review.completed_at
+            for step_mark in step_marks.values()
+        ]
+
+        return all(step_marks_before_review)
+
 
 class StepMarkPassFail(Enum):
     UNSET = "un"

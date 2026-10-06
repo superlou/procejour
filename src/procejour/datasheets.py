@@ -84,6 +84,9 @@ async def build_datasheet(
             if current_user.qa:
                 ui.button("Review", on_click=toggle_review).props("outline")
 
+            if await datasheet.fully_reviewed:
+                ui.icon("verified")
+
     else:
         ui.label(procedure_rev.title + " (demo)").classes("text-h6")
 
