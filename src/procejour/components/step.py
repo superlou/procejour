@@ -25,7 +25,7 @@ async def no_observation_step(
         with ui.item_section().classes("col-span-1"):
             ui.label(num)
         with ui.item_section().classes("col-span-6"):
-            ui.label(action)
+            ui.markdown(action)
         with ui.item_section().classes("col-span-2"):
             pass
         with ui.item_section().classes("col-span-2"):
@@ -65,7 +65,7 @@ async def observation_step(
         with ui.item_section().classes("col-span-1"):
             ui.label(args.num)
         with ui.item_section().classes("col-span-6"):
-            ui.label(args.action)
+            ui.markdown(args.action)
         with ui.item_section().classes("col-span-2"):
             observation_input = DatasheetInput(
                 args.observation,
@@ -124,7 +124,7 @@ async def pass_fail_step(
         with ui.item_section().classes("col-span-1"):
             ui.label(args.num)
         with ui.item_section().classes("col-span-6"):
-            ui.label(args.action)
+            ui.markdown(args.action)
         with ui.item_section().classes("col-span-2"):
             observation_input = DatasheetInput(
                 args.observation,
