@@ -1,8 +1,12 @@
 import json
+from datetime import datetime
 
 import plotly.graph_objects as go
 from nicegui import ui
+from nicegui.events import UploadEventArguments
 from pandas import DataFrame
+
+from procejour.config import media_path
 
 from . import humanize
 from .auth import CurrentUser
@@ -113,6 +117,20 @@ async def edit_procedure(id: int, current_user: CurrentUser):
         await rev.save()
         ui.notify("Saved")
 
+    async def handle_media_upload(e: UploadEventArguments):
+        media_dest = media_path / e.file.name
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        media_dest = media_dest.with_suffix("." + timestamp + media_dest.suffix)
+
+        if e.file.content_type not in ["image/jpeg", "image/png", "image/gif"]:
+            ui.notify(
+                "Unsupported file type. Must be jpeg, png, or gif.", color="negative"
+            )
+            return
+
+        upload_success_filename.text = "/media/" + media_dest.name
+        await e.file.save(media_dest)
+
     sidebar_menu(current_user)
     await procedure_header(current_rev)
     await procedure_menu(procedure, current_rev)
@@ -131,6 +149,18 @@ async def edit_procedure(id: int, current_user: CurrentUser):
                 "Datasheet Title", value=current_rev.datasheet_title
             ).classes("w-full")
             ui.button("Save", on_click=save_procedure)
+
+            uploader = (
+                ui.upload(
+                    label="Upload media",
+                    auto_upload=True,
+                    on_upload=handle_media_upload,
+                )
+                .props("no-thumbnails")
+                .classes("w-full")
+            )
+            with uploader.add_slot("list"):
+                upload_success_filename = ui.label()
 
         with ui.column().classes("col-8 p-4"):
             steps_input = ui.json_editor(
