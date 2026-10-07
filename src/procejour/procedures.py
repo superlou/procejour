@@ -117,18 +117,25 @@ async def edit_procedure(id: int, current_user: CurrentUser):
     await procedure_header(current_rev)
     await procedure_menu(procedure, current_rev)
 
-    title_input = ui.input("Title", value=current_rev.title)
-    with ui.row():
-        ref_doc_input = ui.input("Reference Document", value=current_rev.ref_doc)
-        ref_rev_input = ui.input("Reference Revision", value=current_rev.ref_rev)
-    datasheet_title_input = ui.input(
-        "Datasheet Title", value=current_rev.datasheet_title
-    )
+    with ui.row(wrap=False).classes("w-full"):
+        with ui.column().classes("col-4 p-4"):
+            title_input = ui.input("Title", value=current_rev.title).classes("w-full")
+            with ui.row().classes("no-wrap"):
+                ref_doc_input = ui.input(
+                    "Reference Document", value=current_rev.ref_doc
+                ).classes("col-8")
+                ref_rev_input = ui.input(
+                    "Ref. Revision", value=current_rev.ref_rev
+                ).classes("col-3")
+            datasheet_title_input = ui.input(
+                "Datasheet Title", value=current_rev.datasheet_title
+            ).classes("w-full")
+            ui.button("Save", on_click=save_procedure)
 
-    steps_input = ui.json_editor(
-        {"content": {"json": current_rev.steps}, "mode": "text"}
-    ).classes("w-full h-100")
-    ui.button("Save", on_click=save_procedure)
+        with ui.column().classes("col-8 p-4"):
+            steps_input = ui.json_editor(
+                {"content": {"json": current_rev.steps}, "mode": "text"}
+            ).classes("w-full h-[calc(100vh_-_180px)]")
 
 
 @ui.page("/procedures/{id}/demo")
